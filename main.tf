@@ -27,7 +27,7 @@ resource "ncloud_network_acl" "hashicat" {
 resource "ncloud_subnet" "hashicat" {
   name           = "${var.prefix}-subnet"
   vpc_no         = ncloud_vpc.hashicat.id
-  subnet         = "10.0.1.0/24"
+  subnet         = "10.10.1.0/24"
   zone           = var.zone
   network_acl_no = ncloud_network_acl.hashicat.id
   subnet_type    = "PUBLIC"
