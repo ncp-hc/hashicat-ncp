@@ -11,7 +11,8 @@ variable "prefix" {
 
 variable "client_ip" {
   description = "https://search.naver.com/search.naver?where=nexearch&sm=top_sug.pre&fbm=1&acr=1&acq=ip&qdt=0&ie=utf8&query=ip+%EC%A3%BC%EC%86%8C+%ED%99%95%EC%9D%B8"
-  default = "118.130.103.106"
+  default = "0.0.0.0/0"
+  // default = "MY_IP/32"
 }
 
 variable "region" {
