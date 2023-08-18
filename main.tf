@@ -27,33 +27,19 @@ resource "ncloud_network_acl" "hashicat" {
 resource "ncloud_subnet" "hashicat" {
   name           = "${var.prefix}-subnet"
   vpc_no         = ncloud_vpc.hashicat.id
-  subnet         = cidrsubnet(var.address_space, 8, 1)
+  subnet         = cidrsubnet(ncloud_vpc.hashicat.ipv4_cidr_block, 8, 1) # "10.0.1.0/24"
   zone           = var.zone
   network_acl_no = ncloud_network_acl.hashicat.id
   subnet_type    = "PUBLIC"
   usage_type     = "GEN"
 }
 
-resource "ncloud_nat_gateway" "hashicat" {
-  vpc_no = ncloud_vpc.hashicat.id
-  zone   = var.zone
-  name   = "${var.prefix}-gw"
-}
-
-resource "ncloud_route" "hashicat" {
-  route_table_no         = ncloud_vpc.hashicat.default_public_route_table_no
-  destination_cidr_block = cidrsubnet(var.address_space, 8, 1)
-  target_type            = "NATGW" # NATGW (NAT Gateway) | VPCPEERING (VPC Peering) | VGW (Virtual Private Gateway).
-  target_name            = ncloud_nat_gateway.hashicat.name
-  target_no              = ncloud_nat_gateway.hashicat.id
-}
-
 locals {
   public_subnet_inbound = [
     [1, "TCP", "0.0.0.0/0", "80", "ALLOW"],
     [2, "TCP", "0.0.0.0/0", "443", "ALLOW"],
-    [3, "TCP", "0.0.0.0/0", "22", "ALLOW"],
-    [4, "TCP", "${var.client_ip}", "3389", "ALLOW"],
+    [3, "TCP", "${var.client_ip}/32", "22", "ALLOW"],
+    [4, "TCP", "${var.client_ip}/32", "3389", "ALLOW"],
     [5, "TCP", "0.0.0.0/0", "32768-65535", "ALLOW"],
     [197, "TCP", "0.0.0.0/0", "1-65535", "DROP"],
     [198, "UDP", "0.0.0.0/0", "1-65535", "DROP"],
@@ -63,8 +49,10 @@ locals {
   public_subnet_outbound = [
     [1, "TCP", "0.0.0.0/0", "80", "ALLOW"],
     [2, "TCP", "0.0.0.0/0", "443", "ALLOW"],
-    [3, "TCP", "0.0.0.0/0", "9001-65535", "ALLOW"],
-    [4, "TCP", "${ncloud_server.hashicat.network_interface[0].private_ip}/32", "8080", "ALLOW"],
+    [3, "TCP", "${var.client_ip}/32", "22", "ALLOW"],
+    [4, "TCP", "${var.client_ip}/32", "3389", "ALLOW"],
+    [5, "TCP", "0.0.0.0/0", "9001-65535", "ALLOW"],
+    [6, "TCP", "${ncloud_server.hashicat.network_interface[0].private_ip}/32", "8080", "ALLOW"],
     # Allow 8080 port to private server
     [197, "TCP", "0.0.0.0/0", "1-65535", "DROP"],
     [198, "UDP", "0.0.0.0/0", "1-65535", "DROP"],
@@ -216,3 +204,7 @@ resource "null_resource" "configure-cat-app" {
     }
   }
 }
+
+# output "public_ip" {
+#   value = ncloud_public_ip.hashicat.public_ip
+# }
