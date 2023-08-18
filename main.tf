@@ -27,25 +27,11 @@ resource "ncloud_network_acl" "hashicat" {
 resource "ncloud_subnet" "hashicat" {
   name           = "${var.prefix}-subnet"
   vpc_no         = ncloud_vpc.hashicat.id
-  subnet         = cidrsubnet(var.address_space, 8, 1)
+  subnet         = cidrsubnet(ncloud_vpc.hashicat.ipv4_cidr_block, 8, 1) # "10.0.1.0/24"
   zone           = var.zone
   network_acl_no = ncloud_network_acl.hashicat.id
   subnet_type    = "PUBLIC"
   usage_type     = "GEN"
-}
-
-resource "ncloud_nat_gateway" "hashicat" {
-  vpc_no = ncloud_vpc.hashicat.id
-  zone   = var.zone
-  name   = "${var.prefix}-gw"
-}
-
-resource "ncloud_route" "hashicat" {
-  route_table_no         = ncloud_vpc.hashicat.default_public_route_table_no
-  destination_cidr_block = cidrsubnet(var.address_space, 8, 1)
-  target_type            = "NATGW" # NATGW (NAT Gateway) | VPCPEERING (VPC Peering) | VGW (Virtual Private Gateway).
-  target_name            = ncloud_nat_gateway.hashicat.name
-  target_no              = ncloud_nat_gateway.hashicat.id
 }
 
 locals {
@@ -216,3 +202,7 @@ resource "null_resource" "configure-cat-app" {
     }
   }
 }
+
+# output "public_ip" {
+#   value = ncloud_public_ip.hashicat.public_ip
+# }
